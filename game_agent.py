@@ -134,7 +134,7 @@ class CustomPlayer:
             # when the timer gets close to expiring
             if self.iterative:
                 depth = 0
-                while True:
+                while current_move != -1:
                     depth += 1
                     current_move = self.move_for_depth(game, depth)
             else:
