@@ -129,7 +129,8 @@ class CustomPlayer:
             # here in order to avoid timeout. The try/except block will
             # automatically catch the exception raised by the search method
             # when the timer gets close to expiring
-            pass
+            score, (x, y) = self.minimax(game=game, depth=1)
+            return (x, y)
 
         except Timeout:
             # Handle any actions required at timeout, if necessary
