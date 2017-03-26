@@ -139,6 +139,13 @@ class CustomPlayer:
         # Return the best move from the last completed search iteration
         raise NotImplementedError
 
+    def move_for_depth(self, game, depth):
+        if self.method == 'minimax':
+            _, move = self.minimax(game, depth)
+        elif self.method == 'alphabeta':
+            _, move = self.alphabeta(game, depth)
+        return move
+
     def minimax(self, game, depth, maximizing_player=True):
         """Implement the minimax search algorithm as described in the lectures.
 
