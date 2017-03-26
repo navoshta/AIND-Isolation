@@ -239,5 +239,34 @@ class CustomPlayer:
         if self.time_left() < self.TIMER_THRESHOLD:
             raise Timeout()
 
-        # TODO: finish this function!
-        raise NotImplementedError
+        if depth == 0:
+            return (self.score(game, self), game.get_player_location(self))
+
+        best_move = (-1, -1)
+        best_score = float("-inf") if maximizing_player else float("inf")
+
+        for current_move in game.get_legal_moves():
+            current_score, _ = self.alphabeta(
+                game.forecast_move(current_move),
+                depth - 1,
+                alpha, beta,
+                not maximizing_player
+            )
+
+            if maximizing_player:
+                if current_score > best_score:
+                    best_score = current_score
+                    best_move = current_move
+                alpha = max(alpha, best_score)
+                if alpha >= beta:
+                    return best_score, best_move
+
+            else:
+                if current_score < best_score:
+                    best_score = current_score
+                    best_move = current_move
+                beta = min(beta, best_score)
+                if beta <= alpha:
+                    return best_score, best_move
+
+        return (best_score, best_move)
