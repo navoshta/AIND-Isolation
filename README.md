@@ -86,7 +86,7 @@ Student v1          65.36%
 ```
 
 ### Heuristic #2: Weighted distance from edges
-Second approach extends the `custom_score_v1()` function by adding a constant value for each available move to the player and opponent score. After all the fact that we have a move is pretty important and generally carries more information that just a distance from the board edge. Distance, of course, is still a part of the score, although scaled to be in [0, 1] range and weighted with a constant coefficients of `0.5` for width and height. 
+Second approach extends the `custom_score_v1()` function by adding a constant value for each available move to the player and opponent score. After all the fact that we have a move is pretty important and generally carries more information that just a distance from the board edge. Distance, of course, is still a part of the score, although scaled to be in `[0, 1]` range and weighted with a constant coefficients of `0.5` for width and height. 
 
 #### Implementation
 Using weights-bias terminology weights are equal to `0.5` and bias is equal to `1`.
@@ -214,4 +214,11 @@ Student v3          71.71%
 ```
 
 ## Results
+
+| Heuristic                                | ID Improved | Student     |   
+| ---------------------------------------- | ----------- | ----------- |
+| Distance from edges                      | **67.79%**  | 65.36%      |
+| Weighted distance from edges             | 68.50%      | **70.71%**  |
+| Dynamically weighted distance from edges | 67.71%      | **71.71%**  |
+
 Scoring methods described here are very basic, and undoubtedly won't beat the world Isolation champion. They are, however, fairly intuitive, can be easily vectorized and seem to represent an iterative process of gradually improving game agent's heuristic.
