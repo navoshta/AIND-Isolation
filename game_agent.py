@@ -36,6 +36,31 @@ def custom_score_v1(game, player):
 
     return float(own_score - opp_score)
 
+def custom_score_v2(game, player):
+    if game.is_loser(player):
+        return float("-inf")
+
+    if game.is_winner(player):
+        return float("inf")
+
+    own_score = 0
+    opp_score = 0
+
+    half_h = game.height / 2
+    half_w = game.width / 2
+
+    for r, c in game.get_legal_moves(player):
+        own_score += 1
+        own_score += 0.5 * (half_h - abs(half_h - r)) / half_h
+        own_score += 0.5 * (half_w - abs(half_w - c)) / half_w
+
+    for r, c in game.get_legal_moves(game.get_opponent(player)):
+        opp_score += 1
+        opp_score += 0.5 * (half_h - abs(half_h - r)) / half_h
+        opp_score += 0.5 * (half_w - abs(half_w - c)) / half_w
+
+    return float(own_score - opp_score)
+
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
     of the given player.
