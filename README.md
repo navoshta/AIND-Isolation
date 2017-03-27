@@ -5,8 +5,6 @@
 
 ## Synopsis
 
-In this project, students will develop an adversarial search agent to play the game "Isolation".  Students only need to modify code in the `game_agent.py`, however, code is included for example player and evaluation functions for you to review and test against in the other files.
-
 Isolation is a deterministic, two-player game of perfect information in which the players alternate turns moving a single piece from one cell to another on a board.  Whenever either player occupies a cell, that cell becomes blocked for the remainder of the game.  The first player with no remaining legal moves loses, and the opponent is declared the winner.
 
 This project uses a version of Isolation where each agent is restricted to L-shaped movements (like a knight in chess) on a rectangular grid (like a chess or checkerboard).  The agents can move to any open cell on the board that is 2-rows and 1-column or 2-columns and 1-row away from their current position on the board. Movements are blocked at the edges of the board (the board does not wrap around), however, the player can "jump" blocked or occupied spaces (just like a knight in chess).
@@ -15,99 +13,146 @@ Additionally, agents will have a fixed time limit each turn to search for the be
 
 These rules are implemented in the `isolation.Board` class provided in the repository. 
 
+## Heuristic Analysis
 
-## Quickstart Guide
+I have implemented three heuristics methods that gradually build upon each other, improving winning results as verified by evaluating performance of agents using it on a reasonable amount of game matches. All of them exploit the same idea based on the position of available moves and winning statistics based on those moves. Generally speaking, the closer player position to the board center the stronger it is in terms of winning, we use this fact as each of the described heuristic methods penalizes available moves if those are far from the board center. Reasoning behind it being that with L-shape moves there are generally less available moves over the next N iterations the closer you are to the board edge.
 
-The following example creates a game and illustrates the basic API. You can run this example with `python sample_players.py`
+* **Distance from edges (`custom_score_v1()`)**. Calculates the sum of distances of each of the available moves to the board edges.
+* **Weighted distance from edges (`custom_score_v2()`)**. Adds constant weights to the previous sum, as well as a constant bias for each available move.
+* **Dynamically weighted distance from edges (`custom_score_v3()`)**. Assigns dynamic weights to the previous heuristic, based on the number of available cells on the board.
 
-    from isolation import Board
+Each heuristic calculates player and opponent scores and returns their difference. Described heuristics capture various information about available moves, but generally speaking terminology is as follows: _weight_ is the coefficient we apply to the available move distance from the edge of the board, and _bias_ is a coefficient we apply to the fact that we have a move.
 
-    # create an isolation board (by default 7x7)
-    player1 = RandomPlayer()
-    player2 = GreedyPlayer()
-    game = Board(player1, player2)
+### Distance from edges (`custom_score_v1()`)
+First we try a very straightforward approach of penalizing available moves that are further away from the center of the board, we simply calculate a sum of distances of available moves from the board edges for each player, and then return the difference. Just as one would expect this obvious approach didn't yield good results and actually turned out to be worse than _ID Improved_ from the lectures.
 
-    # place player 1 on the board at row 2, column 3, then place player 2 on
-    # the board at row 0, column 5; display the resulting board state.  Note
-    # that .apply_move() changes the calling object
-    game.apply_move((2, 3))
-    game.apply_move((0, 5))
-    print(game.to_string())
+Using weights-bias terminology weights are equal to `1` and bias is equal to `0`.
 
-    # players take turns moving on the board, so player1 should be next to move
-    assert(player1 == game.active_player)
+```
+*************************
+ Evaluating: ID_Improved 
+*************************
 
-    # get a list of the legal moves available to the active player
-    print(game.get_legal_moves())
+Playing Matches:
+----------
+  Match 1: ID_Improved vs   Random      Result: 160 to 40
+  Match 2: ID_Improved vs   MM_Null     Result: 152 to 48
+  Match 3: ID_Improved vs   MM_Open     Result: 131 to 69
+  Match 4: ID_Improved vs MM_Improved   Result: 117 to 83
+  Match 5: ID_Improved vs   AB_Null     Result: 147 to 53
+  Match 6: ID_Improved vs   AB_Open     Result: 128 to 72
+  Match 7: ID_Improved vs AB_Improved   Result: 114 to 86
 
-    # get a successor of the current state by making a copy of the board and
-    # applying a move. Notice that this does NOT change the calling object
-    # (unlike .apply_move()).
-    new_game = game.forecast_move((1, 1))
-    assert(new_game.to_string() != game.to_string())
-    print("\nOld state:\n{}".format(game.to_string()))
-    print("\nNew state:\n{}".format(new_game.to_string()))
+Results:
+----------
+ID_Improved         67.79%
 
-    # play the remainder of the game automatically -- outcome can be "illegal
-    # move" or "timeout"; it should _always_ be "illegal move" in this example
-    winner, history, outcome = game.play()
-    print("\nWinner: {}\nOutcome: {}".format(winner, outcome))
-    print(game.to_string())
-    print("Move history:\n{!s}".format(history))
+*************************
+ Evaluating: Student v1   
+*************************
 
+Playing Matches:
+----------
+  Match 1: Student v1  vs   Random      Result: 168 to 32
+  Match 2: Student v1  vs   MM_Null     Result: 146 to 54
+  Match 3: Student v1  vs   MM_Open     Result: 103 to 97
+  Match 4: Student v1  vs MM_Improved   Result: 107 to 93
+  Match 5: Student v1  vs   AB_Null     Result: 138 to 62
+  Match 6: Student v1  vs   AB_Open     Result: 130 to 70
+  Match 7: Student v1  vs AB_Improved   Result: 123 to 77
 
-## Instructions
+Results:
+----------
+Student v1          65.36%
+```
 
-Implement the following four functions in `game_agent.py`:
+### Weighted distance from edges (`custom_score_v2()`)
+Second approach extends the `custom_score_v1()` function by adding a constant value for each available move to the player and opponent score. After all the fact that we have a move is pretty important and generally carries more information that just a distance from the board edge. Distance, of course, is still a part of the score, although scaled to be in [0, 1] range and weighted with a constant coefficients of `0.5` for width and height. This heuristic performs much better, and from my initial tests already yields better results than _ID Improved_ (which never got past 70% on my machine).
 
-- `CustomPlayer.minimax()`: implement minimax search
-- `CustomPlayer.alphabeta()`: implement minimax search with alpha-beta pruning
-- `CustomPlayer.get_move()`: implement fixed-depth and iterative deepening search
-- `custom_score()`: implement your own position evaluation heuristic
+Using weights-bias terminology weights are equal to `0.5` and bias is equal to `1`.
 
-You may write or modify code within each file (as long as you maintain compatibility with the function signatures provided) and you may add other classes, functions, etc., as needed, but it is not required.  
+```
+*************************
+ Evaluating: ID_Improved 
+*************************
 
+Playing Matches:
+----------
+  Match 1: ID_Improved vs   Random      Result: 154 to 46
+  Match 2: ID_Improved vs   MM_Null     Result: 154 to 46
+  Match 3: ID_Improved vs   MM_Open     Result: 123 to 77
+  Match 4: ID_Improved vs MM_Improved   Result: 124 to 76
+  Match 5: ID_Improved vs   AB_Null     Result: 152 to 48
+  Match 6: ID_Improved vs   AB_Open     Result: 125 to 75
+  Match 7: ID_Improved vs AB_Improved   Result: 127 to 73
 
-### Coding
+Results:
+----------
+ID_Improved         68.50%
 
-The steps below outline one suggested process for completing the project -- however, this is just a suggestion to help you get started.  Unit tests can be executed by running `python agent_test.py -v`.  (See the [unittest](https://docs.python.org/3/library/unittest.html#basic-example) module for details.)
+*************************
+ Evaluating: Student v2  
+*************************
 
-0. Pass the test_get_move_interface and test_minimax_interface unit tests by implementing a fixed-depth call to minimax in `CustomPlayer.get_move()` and implementing a single-level search in `CustomPlayer.minimax()` (the interface checks only tests depth=1)
+Playing Matches:
+----------
+  Match 1: Student v2  vs   Random      Result: 159 to 41
+  Match 2: Student v2  vs   MM_Null     Result: 160 to 40
+  Match 3: Student v2  vs   MM_Open     Result: 135 to 65
+  Match 4: Student v2  vs MM_Improved   Result: 124 to 76
+  Match 5: Student v2  vs   AB_Null     Result: 150 to 50
+  Match 6: Student v2  vs   AB_Open     Result: 131 to 69
+  Match 7: Student v2  vs AB_Improved   Result: 131 to 69
+ 
+Results:
+----------
+Student v2          70.71%
+```
 
-0. Pass the test_minimax test by extending your `CustomPlayer.minimax()` function with the full recursive search process.  See Also: [AIMA Minimax Decision](https://github.com/aimacode/aima-pseudocode/blob/master/md/Minimax-Decision.md)
+### Dynamically weighted distance from edges (`custom_score_v3()`)
+The main highlight of the third version of our heuristic is dynamic weights that we assign to the fact that a move is present and to its distance from the board edge. As I've mentioned earlier, the fact that we have a move is fairly important, however, it is _more important_ if we are running out of available empty cells on the board, and _less important_ if we still a lot of non-occupied cells. In order to capture that info we make player score weights and bias dependent on the fraction of empty cells on the board. The more there are empty cells the higher the bias (e.g. the fact that we _have_ available move, not _how good_ it is). This approach performs slightly better than the one with fixed weights and biases.
 
-0. Pass the test_alphabeta_interface test by copying the code from `CustomPlayer.minimax()` into the `CustomPlayer.alphabeta()` function.
+Using weights-bias terminology weights are equal to `(blank_cells / total_cells) / 2` and bias is equal to `1 - (blank_cells / total_cells)`.
 
-0. Pass the test_alphabeta test by extending your `CustomPlayer.alphabeta()` function to include alpha and beta pruning.  See Also: [AIMA Alpha-Beta Search](https://github.com/aimacode/aima-pseudocode/blob/master/md/Alpha-Beta-Search.md)
+```
+*************************
+ Evaluating: ID_Improved 
+*************************
 
-0. Pass the test_get_move test by extending your fixed-depth call in `CustomPlayer.get_move()` to implement Iterative Deepening.  See Also [AIMA Iterative Deepening Search](https://github.com/aimacode/aima-pseudocode/blob/master/md/Iterative-Deepening-Search.md)
+Playing Matches:
+----------
+  Match 1: ID_Improved vs   Random      Result: 163 to 37
+  Match 2: ID_Improved vs   MM_Null     Result: 147 to 53
+  Match 3: ID_Improved vs   MM_Open     Result: 119 to 81
+  Match 4: ID_Improved vs MM_Improved   Result: 129 to 71
+  Match 5: ID_Improved vs   AB_Null     Result: 145 to 55
+  Match 6: ID_Improved vs   AB_Open     Result: 129 to 71
+  Match 7: ID_Improved vs AB_Improved   Result: 116 to 84
+ 
 
-0. Finally, pass the test_heuristic test by implementing any heuristic in `custom_score()`.  (This test only validates the return value type -- it does not check for "correctness" of your heuristic.)  You can see example heuristics in the `sample_players.py` file.
+Results:
+----------
+ID_Improved         67.71%
 
+*************************
+ Evaluating: Student v3  
+*************************
 
-### Tournament
+Playing Matches:
+----------
+  Match 1: Student v3  vs   Random      Result: 156 to 44
+  Match 2: Student v3  vs   MM_Null     Result: 159 to 41
+  Match 3: Student v3  vs   MM_Open     Result: 137 to 63
+  Match 4: Student v3  vs MM_Improved   Result: 129 to 71
+  Match 5: Student v3  vs   AB_Null     Result: 154 to 46
+  Match 6: Student v3  vs   AB_Open     Result: 135 to 65
+  Match 7: Student v3  vs AB_Improved   Result: 134 to 66
+ 
 
-The `tournament.py` script is used to evaluate the effectiveness of your custom_score heuristic.  The script measures relative performance of your agent (called "Student") in a round-robin tournament against several other pre-defined agents.  The Student agent uses time-limited Iterative Deepening and the custom_score heuristic you wrote.
+Results:
+----------
+Student v3          71.71%
+```
 
-The performance of time-limited iterative deepening search is hardware dependent (faster hardware is expected to search deeper than slower hardware in the same amount of time).  The script controls for these effects by also measuring the baseline performance of an agent called "ID_Improved" that uess Iterative Deepening and the improved_score heuristic from `sample_players.py`.  Your goal is to develop a heuristic such that Student outperforms ID_Improved.
-
-The tournament opponents are listed below. (See also: sample heuristics and players defined in sample_players.py)
-
-- Random: An agent that randomly chooses a move each turn.
-- MM_Null: CustomPlayer agent using fixed-depth minimax search and the null_score heuristic
-- MM_Open: CustomPlayer agent using fixed-depth minimax search and the open_move_score heuristic
-- MM_Improved: CustomPlayer agent using fixed-depth minimax search and the improved_score heuristic
-- AB_Null: CustomPlayer agent using fixed-depth alpha-beta search and the null_score heuristic
-- AB_Open: CustomPlayer agent using fixed-depth alpha-beta search and the open_move_score heuristic
-- AB_Improved: CustomPlayer agent using fixed-depth alpha-beta search and the improved_score heuristic
-
-
-## Submitting
-
-Your project is ready for submission when it meets all requirements of the project rubric.  Your code is finished when it passes all unit tests, and you have successfully implemented a suitable heuristic function.
-
-
-## Using the Board Visualization
-
-The `isoviz` folder contains a modified version of chessboard.js that can animate games played on a 7x7 board.  In order to use the board, you must run a local webserver by running `python -m SimpleHTTPServer 8000` from your project directory (you can replace 8000 with another port number if that one is unavailable), then open your browser to `http://localhost:8000` and navigate to the `/isoviz/display.html` page.  Enter the move history of an isolation match (i.e., the array returned by the Board.play() method) into the text area and run the match.  Refresh the page to run a different game.
-
+## Results
+Scoring methods described here are very basic, and undoubtedly won't beat the world Isolation champion. They are, however, fairly intuitive, can be easily vectorized and seem to represent an iterative process of gradually improving game agent's heuristic.
