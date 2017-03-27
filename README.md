@@ -23,7 +23,7 @@ I have implemented three heuristics methods that gradually build upon each other
 
 Each heuristic calculates player and opponent scores and returns their difference. Described heuristics capture various information about available moves, but generally speaking terminology is as follows: _weight_ is the coefficient we apply to the available move distance from the edge of the board, and _bias_ is a coefficient we apply to the fact that we have a move.
 
-### Distance from edges
+### Heuristic #1: Distance from edges
 First we try a very straightforward approach of penalizing available moves that are further away from the center of the board, we simply calculate a sum of distances of available moves from the board edges for each player, and then return the difference. 
 
 #### Implementation
@@ -85,7 +85,7 @@ Results:
 Student v1          65.36%
 ```
 
-### Weighted distance from edges
+### Heuristic #2: Weighted distance from edges
 Second approach extends the `custom_score_v1()` function by adding a constant value for each available move to the player and opponent score. After all the fact that we have a move is pretty important and generally carries more information that just a distance from the board edge. Distance, of course, is still a part of the score, although scaled to be in [0, 1] range and weighted with a constant coefficients of `0.5` for width and height. 
 
 #### Implementation
@@ -146,7 +146,7 @@ Results:
 Student v2          70.71%
 ```
 
-### Dynamically weighted distance from edges
+### Heuristic #3: Dynamically weighted distance from edges
 The main highlight of the third version of our heuristic is dynamic weights that we assign to the fact that a move is present and to its distance from the board edge. As I've mentioned earlier, the fact that we have a move is fairly important, however, it is _more important_ if we are running out of available empty cells on the board, and _less important_ if we still a lot of non-occupied cells. In order to capture that info we make player score weights and bias dependent on the fraction of empty cells on the board. The more there are empty cells the higher the bias (e.g. the fact that we _have_ available move, not _how good_ it is).
 
 #### Implementation
