@@ -15,18 +15,37 @@ These rules are implemented in the `isolation.Board` class provided in the repos
 
 ## Heuristic Analysis
 
-I have implemented three heuristics methods that gradually build upon each other, improving winning results as verified by evaluating performance of agents using it on a reasonable amount of game matches. All of them exploit the same idea based on the position of available moves and winning statistics based on those moves. Generally speaking, the closer player position to the board center the stronger it is in terms of winning, we use this fact as each of the described heuristic methods penalizes available moves if those are far from the board center. Reasoning behind it being that with L-shape moves there are generally less available moves over the next N iterations the closer you are to the board edge.
+I have implemented three heuristics methods that gradually build upon each other, improving winning results as verified by evaluating performance of agents using it on a reasonable amount of game matches. All of them exploit the same idea based on the position of available moves and winning statistics based on those moves. Generally speaking, the closer player position to the board center the stronger it is in terms of winning, we use this fact as each of the described heuristic methods penalizes available moves if those are far from the board center. Reasoning behind it being that with L-shape moves there are generally less available moves over the next `N` iterations the closer you are to the board edge.
 
-* **Distance from edges (`custom_score_v1()`)**. Calculates the sum of distances of each of the available moves to the board edges.
-* **Weighted distance from edges (`custom_score_v2()`)**. Adds constant weights to the previous sum, as well as a constant bias for each available move.
-* **Dynamically weighted distance from edges (`custom_score_v3()`)**. Assigns dynamic weights to the previous heuristic, based on the number of available cells on the board.
+* **Distance from edges** implemented in `custom_score_v1()`. Calculates the sum of distances of each of the available moves to the board edges.
+* **Weighted distance from edges** implemented in `custom_score_v2()`. Adds constant weights to the previous sum, as well as a constant bias for each available move.
+* **Dynamically weighted distance from edges** implemented in `custom_score_v3()`. Assigns dynamic weights to the previous heuristic, based on the number of available cells on the board.
 
 Each heuristic calculates player and opponent scores and returns their difference. Described heuristics capture various information about available moves, but generally speaking terminology is as follows: _weight_ is the coefficient we apply to the available move distance from the edge of the board, and _bias_ is a coefficient we apply to the fact that we have a move.
 
-### Distance from edges (`custom_score_v1()`)
-First we try a very straightforward approach of penalizing available moves that are further away from the center of the board, we simply calculate a sum of distances of available moves from the board edges for each player, and then return the difference. Just as one would expect this obvious approach didn't yield good results and actually turned out to be worse than _ID Improved_ from the lectures.
+### Distance from edges
+First we try a very straightforward approach of penalizing available moves that are further away from the center of the board, we simply calculate a sum of distances of available moves from the board edges for each player, and then return the difference. 
 
+#### Implementation
 Using weights-bias terminology weights are equal to `1` and bias is equal to `0`.
+
+```python
+half_h = game.height / 2
+half_w = game.width / 2
+
+for r, c in game.get_legal_moves(player):
+    own_score += half_h - abs(half_h - r)
+    own_score += half_w - abs(half_w - c)
+
+for r, c in game.get_legal_moves(game.get_opponent(player)):
+    opp_score += half_h - abs(half_h - r)
+    opp_score += half_w - abs(half_w - c)
+
+score = own_score - opp_score
+```
+
+#### Evaluation
+Just as one would expect this obvious approach didn't yield good results and actually turned out to be worse than _ID Improved_ from the lectures.
 
 ```
 *************************
@@ -66,10 +85,28 @@ Results:
 Student v1          65.36%
 ```
 
-### Weighted distance from edges (`custom_score_v2()`)
-Second approach extends the `custom_score_v1()` function by adding a constant value for each available move to the player and opponent score. After all the fact that we have a move is pretty important and generally carries more information that just a distance from the board edge. Distance, of course, is still a part of the score, although scaled to be in [0, 1] range and weighted with a constant coefficients of `0.5` for width and height. This heuristic performs much better, and from my initial tests already yields better results than _ID Improved_ (which never got past 70% on my machine).
+### Weighted distance from edges
+Second approach extends the `custom_score_v1()` function by adding a constant value for each available move to the player and opponent score. After all the fact that we have a move is pretty important and generally carries more information that just a distance from the board edge. Distance, of course, is still a part of the score, although scaled to be in [0, 1] range and weighted with a constant coefficients of `0.5` for width and height. 
 
+#### Implementation
 Using weights-bias terminology weights are equal to `0.5` and bias is equal to `1`.
+
+```python
+for r, c in game.get_legal_moves(player):
+    own_score += 1
+    own_score += 0.5 * (half_h - abs(half_h - r)) / half_h
+    own_score += 0.5 * (half_w - abs(half_w - c)) / half_w
+
+for r, c in game.get_legal_moves(game.get_opponent(player)):
+    opp_score += 1
+    opp_score += 0.5 * (half_h - abs(half_h - r)) / half_h
+    opp_score += 0.5 * (half_w - abs(half_w - c)) / half_w
+
+score = own_score - opp_score
+```
+
+#### Evaluation
+This heuristic performs much better, and from my initial tests already yields better results than _ID Improved_ (which never got past 70% on my machine).
 
 ```
 *************************
@@ -109,10 +146,32 @@ Results:
 Student v2          70.71%
 ```
 
-### Dynamically weighted distance from edges (`custom_score_v3()`)
-The main highlight of the third version of our heuristic is dynamic weights that we assign to the fact that a move is present and to its distance from the board edge. As I've mentioned earlier, the fact that we have a move is fairly important, however, it is _more important_ if we are running out of available empty cells on the board, and _less important_ if we still a lot of non-occupied cells. In order to capture that info we make player score weights and bias dependent on the fraction of empty cells on the board. The more there are empty cells the higher the bias (e.g. the fact that we _have_ available move, not _how good_ it is). This approach performs slightly better than the one with fixed weights and biases.
+### Dynamically weighted distance from edges
+The main highlight of the third version of our heuristic is dynamic weights that we assign to the fact that a move is present and to its distance from the board edge. As I've mentioned earlier, the fact that we have a move is fairly important, however, it is _more important_ if we are running out of available empty cells on the board, and _less important_ if we still a lot of non-occupied cells. In order to capture that info we make player score weights and bias dependent on the fraction of empty cells on the board. The more there are empty cells the higher the bias (e.g. the fact that we _have_ available move, not _how good_ it is).
 
+#### Implementation
 Using weights-bias terminology weights are equal to `(blank_cells / total_cells) / 2` and bias is equal to `1 - (blank_cells / total_cells)`.
+
+```python
+c_center = len(game.get_blank_spaces()) / (game.height * game.width)
+c_moves = (1 - c_center)
+c_center = c_center / 2
+
+for r, c in game.get_legal_moves(player):
+    own_score += c_moves
+    own_score += c_center * (half_h - abs(half_h - r)) / half_h
+    own_score += c_center * (half_w - abs(half_w - c)) / half_w
+
+for r, c in game.get_legal_moves(game.get_opponent(player)):
+    opp_score += c_moves
+    opp_score += c_center * (half_h - abs(half_h - r)) / half_h
+    opp_score += c_center * (half_w - abs(half_w - c)) / half_w
+
+score = own_score - opp_score
+```
+
+#### Evaluation
+This approach performs slightly better than the one with fixed weights and biases.
 
 ```
 *************************
