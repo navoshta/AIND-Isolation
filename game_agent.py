@@ -14,6 +14,24 @@ class Timeout(Exception):
     pass
 
 def custom_score_v1(game, player):
+    """
+    Heuristic based solely on available moves' distance from edges.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : object
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
     if game.is_loser(player):
         return float("-inf")
 
@@ -37,6 +55,24 @@ def custom_score_v1(game, player):
     return float(own_score - opp_score)
 
 def custom_score_v2(game, player):
+    """
+    Heuristic based on available moves' weighted distance from edges.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : object
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
     if game.is_loser(player):
         return float("-inf")
 
@@ -62,6 +98,24 @@ def custom_score_v2(game, player):
     return float(own_score - opp_score)
 
 def custom_score_v3(game, player):
+    """
+    Heuristic based on available moves' dynamically weighted distance from edges.
+
+    Parameters
+    ----------
+    game : `isolation.Board`
+        An instance of `isolation.Board` encoding the current state of the
+        game (e.g., player locations and blocked cells).
+
+    player : object
+        A player instance in the current game (i.e., an object corresponding to
+        one of the player objects `game.__player_1__` or `game.__player_2__`.)
+
+    Returns
+    -------
+    float
+        The heuristic value of the current game state to the specified player.
+    """
     if game.is_loser(player):
         return float("-inf")
 
