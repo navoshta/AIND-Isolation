@@ -221,4 +221,11 @@ Student v3          71.71%
 | Weighted distance from edges             | 68.50%      | **70.71%**  |
 | Dynamically weighted distance from edges | 67.71%      | **71.71%**  |
 
+I am using the heuristic based on dynamically weighted distance from edges in my project (`custom_score_v3()`) due to a number of reasons.
+
+* It performs better than heuristic methods from previous iterations and, most importantly, better than ID_Improved, as verified using winning statistics over a reasonable amount of game matches.
+* This is the only heuristic that consistently beats ID_Improved against every other player, even after running it over 400 game matches as opposed to usual test of 200 matches.
+* Out of all candidates described in this analysis the third heuristic captures highest amount of information about the game state that should be useful for winning.
+* It is essentially of the same complexity as all other heuristics described here. It does not perform any deep tree traversal and only relies on statistics based on the topmost branching level. Simply put it is not more computationally complex than other heuristics, hence we don’t need to justify its usage in terms of time and efficiency tradeoff.
+
 Scoring methods described here are very basic, and undoubtedly won't beat the world Isolation champion. They are, however, fairly intuitive, can be easily vectorized and seem to represent an iterative process of gradually improving game agent's heuristic.
