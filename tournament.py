@@ -31,9 +31,9 @@ from sample_players import null_score
 from sample_players import open_move_score
 from sample_players import improved_score
 from game_agent import CustomPlayer
-from game_agent import custom_score
+from game_agent import custom_score, custom_score_v1, custom_score_v2, custom_score_v3
 
-NUM_MATCHES = 5  # number of matches against each opponent
+NUM_MATCHES = 50  # number of matches against each opponent
 TIME_LIMIT = 150  # number of milliseconds before timeout
 
 TIMEOUT_WARNING = "One or more agents lost a match this round due to " + \
@@ -117,7 +117,7 @@ def play_round(agents, num_matches):
 
         counts = {agent_1.player: 0., agent_2.player: 0.}
         names = [agent_1.name, agent_2.name]
-        print("  Match {}: {!s:^11} vs {!s:^11}".format(idx + 1, *names), end=' ')
+        match_i = 0
 
         # Each player takes a turn going first
         for p1, p2 in itertools.permutations((agent_1.player, agent_2.player)):
@@ -126,16 +126,21 @@ def play_round(agents, num_matches):
                 counts[p1] += score_1
                 counts[p2] += score_2
                 total += score_1 + score_2
+                print("\r  Match {}: {!s:^11} vs {!s:^11}\tPlaying {}/{}".format(
+                    idx + 1, *names, match_i + 1, num_matches * 2
+                ), end=' ')
+                match_i += 1
 
         wins += counts[agent_1.player]
 
-        print("\tResult: {} to {}".format(int(counts[agent_1.player]),
-                                          int(counts[agent_2.player])))
+        print("\r  Match {}: {!s:^11} vs {!s:^11}\tResult: {} to {}\n".format(
+            idx + 1, *names, int(counts[agent_1.player]), int(counts[agent_2.player])
+        ), end=' ')
 
     return 100. * wins / total
 
 
-def main():
+def main(score_fn, name):
 
     HEURISTICS = [("Null", null_score),
                   ("Open", open_move_score),
@@ -161,9 +166,10 @@ def main():
     # relative to the performance of the ID_Improved agent to account for
     # faster or slower computers.
     test_agents = [Agent(CustomPlayer(score_fn=improved_score, **CUSTOM_ARGS), "ID_Improved"),
-                   Agent(CustomPlayer(score_fn=custom_score, **CUSTOM_ARGS), "Student")]
+                   Agent(CustomPlayer(score_fn=score_fn, **CUSTOM_ARGS), name)]
 
     print(DESCRIPTION)
+    print("Heuristic score function: " + score_fn.__name__)
     for agentUT in test_agents:
         print("")
         print("*************************")
@@ -177,6 +183,14 @@ def main():
         print("----------")
         print("{!s:<15}{:>10.2f}%".format(agentUT.name, win_ratio))
 
+def main_v1():
+    main(custom_score_v1, "Student v1")
+
+def main_v2():
+    main(custom_score_v2, "Student v2")
+
+def main_v3():
+    main(custom_score_v3, "Student v3")
 
 if __name__ == "__main__":
-    main()
+    main(custom_score)
